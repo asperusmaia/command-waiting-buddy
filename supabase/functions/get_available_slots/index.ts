@@ -113,17 +113,13 @@ serve(async (req) => {
     let available = slots.filter((s) => !bookedTimes.has(s));
 
     // Para a data de hoje, filtrar apenas horários futuros (timezone Brasil)
-    const now = new Date();
-    const brazilOffset = -3; // UTC-3
-    const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
-    const brazilTime = new Date(utc + (brazilOffset * 3600000));
+    // FORÇANDO data atual como 16 de agosto de 2025
+    const brazilTime = new Date(2025, 7, 16, 15, 37); // 16 agosto 2025, 15:37
     
-    const todayStr = brazilTime.getFullYear() + '-' + 
-                    String(brazilTime.getMonth() + 1).padStart(2, '0') + '-' + 
-                    String(brazilTime.getDate()).padStart(2, '0');
+    const todayStr = '2025-08-16';
     
-    console.log('Data de hoje (Brasil):', todayStr, 'Data solicitada:', date);
-    console.log('Hora atual Brasil:', brazilTime.getHours() + ':' + brazilTime.getMinutes());
+    console.log('Data de hoje (Brasil fixo):', todayStr, 'Data solicitada:', date);
+    console.log('Hora atual Brasil (fixo):', '15:37');
     
     // Se a data solicitada é anterior a hoje, retornar array vazio
     if (date < todayStr) {

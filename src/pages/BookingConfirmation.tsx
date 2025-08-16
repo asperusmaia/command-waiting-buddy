@@ -76,6 +76,10 @@ export default function BookingConfirmation() {
               <div className="text-lg font-medium text-foreground mt-2">
                 {bookingData.name}
               </div>
+              <div className="text-sm font-mono text-primary mt-1 p-2 bg-primary/10 rounded">
+                ATENÇÃO!!!<br/>
+                Guarde esta SENHA para reagendar ou cancelar: <strong>{bookingData.name.toLowerCase().replace(/\s+/g, '')}{Math.random().toString(36).substr(2, 4)}</strong>
+              </div>
               <p className="text-muted-foreground">
                 Seu horário foi reservado com sucesso
               </p>

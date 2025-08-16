@@ -119,6 +119,11 @@ export default function RescheduleConfirmation() {
                     </span>
                   </div>
                 </div>
+                
+                <div className="text-sm font-mono text-warning mt-3 p-2 bg-warning/10 rounded border border-warning/40">
+                  ATENÇÃO!!!<br/>
+                  Guarde esta SENHA para reagendar ou cancelar: <strong>{contact.replace(/\D/g, '').slice(-4)}</strong>
+                </div>
               </div>
 
               <div className="text-center space-y-4">

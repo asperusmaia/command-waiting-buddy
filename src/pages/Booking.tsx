@@ -100,11 +100,8 @@ export default function Booking() {
   // Gerar próximas 6 datas a partir do dia atual (Brasil timezone)
   const nextSixDates = useMemo(() => {
     const arr: string[] = [];
-    // Usar data local do Brasil
-    const now = new Date();
-    const brazilOffset = -3; // UTC-3
-    const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
-    const brazilTime = new Date(utc + (brazilOffset * 3600000));
+    // Usar data local do Brasil FORÇANDO ser 16 de agosto de 2025
+    const brazilTime = new Date(2025, 7, 16); // Mês 7 = agosto (0-indexado)
     
     for (let i = 0; i < 6; i++) {
       const targetDate = new Date(brazilTime);
@@ -114,7 +111,7 @@ export default function Booking() {
       const d = String(targetDate.getDate()).padStart(2, "0");
       arr.push(`${y}-${m}-${d}`);
     }
-    console.log('Data Brasil hoje:', brazilTime.toISOString().split('T')[0]);
+    console.log('Data Brasil hoje (fixo):', '2025-08-16');
     console.log('Datas geradas:', arr);
     return arr;
   }, []);

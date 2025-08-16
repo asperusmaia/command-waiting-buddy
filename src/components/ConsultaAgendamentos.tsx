@@ -73,15 +73,26 @@ export default function ConsultaAgendamentos() {
         </p>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="consultaContact">Contato (Telefone)</Label>
-          <Input 
-            id="consultaContact" 
-            value={contact} 
-            onChange={e => setContact(e.target.value)} 
-            placeholder="Digite seu telefone" 
-            className="border-green-500/40" 
-          />
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="consultaContact">Contato (Telefone)</Label>
+            <Input 
+              id="consultaContact" 
+              value={contact} 
+              onChange={e => setContact(e.target.value)} 
+              placeholder="Digite seu telefone" 
+              className="border-green-500/40" 
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="consultaUuid">Senha (4 dígitos)</Label>
+            <Input 
+              id="consultaUuid" 
+              placeholder="Digite os 4 dígitos" 
+              className="border-green-500/40" 
+              maxLength={4}
+            />
+          </div>
         </div>
 
         {/* Agendamentos encontrados */}

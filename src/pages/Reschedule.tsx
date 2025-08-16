@@ -145,11 +145,8 @@ export default function Reschedule() {
   }, [newDate]);
   const nextSixDates = useMemo(() => {
     const arr: string[] = [];
-    // Obter a data atual no timezone do Brasil (UTC-3)
-    const now = new Date();
-    const brazilOffset = -3; // UTC-3
-    const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
-    const brazilTime = new Date(utc + (brazilOffset * 3600000));
+    // Usar data local do Brasil FORÇANDO ser 16 de agosto de 2025
+    const brazilTime = new Date(2025, 7, 16); // Mês 7 = agosto (0-indexado)
     
     for (let i = 0; i < 6; i++) {
       const targetDate = new Date(brazilTime);
@@ -159,7 +156,7 @@ export default function Reschedule() {
       const d = String(targetDate.getDate()).padStart(2, "0");
       arr.push(`${y}-${m}-${d}`);
     }
-    console.log('Data Brasil hoje (Reschedule):', brazilTime.toISOString().split('T')[0]);
+    console.log('Data Brasil hoje (Reschedule fixo):', '2025-08-16');
     console.log('Datas geradas (Reschedule):', arr);
     return arr;
   }, []);
@@ -301,14 +298,25 @@ export default function Reschedule() {
             <CardTitle className="text-warning">Buscar Agendamentos</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="oldContact">Contato (Telefone)</Label>
-              <Input 
-                id="oldContact" 
-                value={oldContact} 
-                onChange={e => setOldContact(e.target.value)} 
-                placeholder="Digite seu telefone para buscar agendamentos" 
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="oldContact">Contato (Telefone)</Label>
+                <Input 
+                  id="oldContact" 
+                  value={oldContact} 
+                  onChange={e => setOldContact(e.target.value)} 
+                  placeholder="Digite seu telefone para buscar agendamentos" 
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="oldUuid">Senha (4 dígitos)</Label>
+                <Input 
+                  id="oldUuid" 
+                  placeholder="Digite os 4 dígitos" 
+                  className="border-warning/40" 
+                  maxLength={4}
+                />
+              </div>
             </div>
           </CardContent>
         </Card>

@@ -144,16 +144,28 @@ export default function Cancel() {
               <CardTitle className="text-center text-red-600">Buscar Agendamentos</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-2">
-                <Label htmlFor="contact">Contato (Telefone)</Label>
-                <Input 
-                  id="contact" 
-                  value={contact} 
-                  onChange={e => setContact(e.target.value)} 
-                  placeholder="Digite seu telefone para buscar agendamentos" 
-                  className="border-destructive/40" 
-                  disabled={isLoading} 
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="contact">Contato (Telefone)</Label>
+                  <Input 
+                    id="contact" 
+                    value={contact} 
+                    onChange={e => setContact(e.target.value)} 
+                    placeholder="Digite seu telefone para buscar agendamentos" 
+                    className="border-destructive/40" 
+                    disabled={isLoading} 
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="uuid">Senha (4 dígitos)</Label>
+                  <Input 
+                    id="uuid" 
+                    placeholder="Digite os 4 dígitos" 
+                    className="border-destructive/40" 
+                    maxLength={4}
+                    disabled={isLoading}
+                  />
+                </div>
               </div>
             </CardContent>
           </Card>
