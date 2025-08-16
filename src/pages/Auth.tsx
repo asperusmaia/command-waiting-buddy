@@ -31,7 +31,7 @@ export default function Auth() {
       const { data: authData, error: authError } = await supabase
         .from("info_loja")
         .select("auth_user")
-        .in("id", ["25c13784-2a16-4b37-9135-086b9a7c36da", "389f20fc-522c-4286-afce-f0cd289b8edb"]);
+        .in("id", ["25c13784-2a16-4b37-9135-086b9a7c36da", "389f20fc-522c-4286-afce-f0cd289b8edb", "a4620b55-c933-463b-90c0-60ab533e1d99"]);
 
       if (authError) {
         console.error("Erro ao buscar credenciais:", authError);

@@ -14,6 +14,7 @@ import { ptBR } from "date-fns/locale";
 import { CalendarIcon, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import authBackground from "@/assets/auth-background.jpg";
+import ConsultaAgendamentos from "@/components/ConsultaAgendamentos";
 interface LojaConfig {
   opening_time?: string;
   closing_time?: string;
@@ -283,7 +284,7 @@ export default function Booking() {
           <p className="text-muted-foreground py-[4px]">Informe Seus Dados para Agendamento</p>
         </header>
 
-        <div className="grid gap-6 md:grid-cols-2">
+        <div className="grid gap-6 md:grid-cols-3">
           {/* Data */}
           <Card>
             <CardHeader>
@@ -342,6 +343,12 @@ export default function Booking() {
               </Select>
             </CardContent>
           </Card>
+        </div>
+
+        {/* Grid com Profissional/Serviços e Consulta de Agendamentos */}
+        <div className="grid gap-6 md:grid-cols-2 mt-6">
+          {/* Consulta de Agendamentos */}
+          <ConsultaAgendamentos />
         </div>
 
         {/* Horários */}

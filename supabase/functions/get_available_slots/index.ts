@@ -125,6 +125,15 @@ serve(async (req) => {
     console.log('Data de hoje (Brasil):', todayStr, 'Data solicitada:', date);
     console.log('Hora atual Brasil:', brazilTime.getHours() + ':' + brazilTime.getMinutes());
     
+    // Se a data solicitada é anterior a hoje, retornar array vazio
+    if (date < todayStr) {
+      console.log('Data solicitada é anterior à data de hoje, retornando array vazio');
+      return new Response(
+        JSON.stringify({ slots: [] }),
+        { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+    
     if (date === todayStr) {
       const currentHour = brazilTime.getHours();
       const currentMinutes = brazilTime.getMinutes();

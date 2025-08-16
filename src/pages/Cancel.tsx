@@ -176,14 +176,18 @@ export default function Cancel() {
                       <div
                         key={booking.id}
                         className={cn(
-                          "p-4 border rounded-lg cursor-pointer transition-colors",
-                          selectedBooking?.id === booking.id
-                            ? "border-destructive bg-destructive/10"
-                            : "border-border hover:border-destructive/50"
+                         "p-4 border rounded-lg cursor-pointer transition-colors relative",
+                         selectedBooking?.id === booking.id
+                           ? "border-destructive bg-destructive/10"
+                           : "border-border hover:border-destructive/50"
                         )}
-                        onClick={() => setSelectedBooking(booking)}
-                      >
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
+                       onClick={() => setSelectedBooking(booking)}
+                     >
+                       {/* Círculo indicador de seleção */}
+                       {selectedBooking?.id === booking.id && (
+                         <div className="absolute left-2 top-1/2 transform -translate-y-1/2 w-3 h-3 bg-destructive rounded-full"></div>
+                       )}
+                       <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm ml-6">
                           <div>
                             <span className="font-medium text-red-600">Nome:</span>
                             <p>{booking.NOME}</p>
