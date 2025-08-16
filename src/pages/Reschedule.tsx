@@ -1,0 +1,502 @@
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { cn } from "@/lib/utils";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { CalendarIcon, ArrowLeft } from "lucide-react";
+import { toast } from "sonner";
+import authBackground from "@/assets/auth-background.jpg";
+
+interface Agendamento {
+  id: string;
+  NOME: string;
+  CONTATO: string;
+  DATA: string;
+  HORA: string;
+  PROFISSIONAL: string;
+  servico: string;
+  STATUS: string;
+}
+interface LojaConfig {
+  opening_time?: string;
+  closing_time?: string;
+  slot_interval_minutes?: number;
+  nome_profissionais?: string;
+  escolha_serviços?: string;
+}
+export default function Reschedule() {
+  const navigate = useNavigate();
+  const [config, setConfig] = useState<LojaConfig | null>(null);
+  const [oldName, setOldName] = useState("");
+  const [oldContact, setOldContact] = useState("");
+  const [oldDate, setOldDate] = useState("");
+  const [oldTime, setOldTime] = useState("");
+  const [newDate, setNewDate] = useState<Date | undefined>(undefined);
+  const [professional, setProfessional] = useState<string>("");
+  const [slotsByDate, setSlotsByDate] = useState<Record<string, string[]>>({});
+  const [loadingSlots, setLoadingSlots] = useState(false);
+  const [pros, setPros] = useState<string[]>([]);
+  const [services, setServices] = useState<string[]>([]);
+  const [service, setService] = useState<string>("");
+  const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
+  const [selectedDateStr, setSelectedDateStr] = useState<string | null>(null);
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
+  const [userBookings, setUserBookings] = useState<Agendamento[]>([]);
+  const [loadingBookings, setLoadingBookings] = useState(false);
+  const [selectedBooking, setSelectedBooking] = useState<Agendamento | null>(null);
+  useEffect(() => {
+    document.title = "Reagendar atendimento | ÁSPERUS";
+  }, []);
+
+  // Carregar configuração
+  useEffect(() => {
+    (async () => {
+      const {
+        data,
+        error
+      } = await supabase.from("info_loja").select("*").limit(1).maybeSingle();
+      if (error) {
+        console.error(error);
+        toast.error("Não foi possível carregar as configurações.");
+        return;
+      }
+      setConfig(data || {});
+    })();
+  }, []);
+
+  // Carregar profissionais e serviços
+  useEffect(() => {
+    const loadProfissionaisEServicos = async () => {
+      try {
+        const {
+          data,
+          error
+        } = await supabase.from("info_loja").select("nome_profissionais, escolha_serviços");
+        if (error) {
+          console.error("Erro ao carregar profissionais e serviços:", error);
+          return;
+        }
+        const allProfissionais = data?.map((row: any) => row.nome_profissionais || "").join(";").split(/[;,\n]/).map(s => s.trim()).filter(Boolean) || [];
+        const allServicos = data?.map((row: any) => row.escolha_serviços || "").join(";").split(/[;,\n]/).map(s => s.trim()).filter(Boolean) || [];
+        setPros([...new Set(allProfissionais)]);
+        setServices([...new Set(allServicos)]);
+      } catch (err) {
+        console.error("Erro ao buscar profissionais e serviços:", err);
+      }
+    };
+    loadProfissionaisEServicos();
+  }, []);
+
+  // Buscar agendamentos do usuário quando dados são preenchidos
+  useEffect(() => {
+    const searchUserBookings = async () => {
+      if (!oldContact) {
+        setUserBookings([]);
+        return;
+      }
+
+      setLoadingBookings(true);
+      try {
+        // Data atual do Brasil
+        const now = new Date();
+        const brazilOffset = -3;
+        const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+        const brazilTime = new Date(utc + (brazilOffset * 3600000));
+        const todayStr = brazilTime.toISOString().split('T')[0];
+
+        const { data, error } = await supabase
+          .from("agendamentos_robustos")
+          .select("*")
+          .eq("CONTATO", oldContact)
+          .neq("STATUS", "CANCELADO")
+          .gte("DATA", todayStr)
+          .order("DATA", { ascending: true })
+          .order("HORA", { ascending: true });
+
+        if (error) {
+          console.error("Erro ao buscar agendamentos:", error);
+          return;
+        }
+
+        setUserBookings(data || []);
+      } catch (err) {
+        console.error("Erro na busca de agendamentos:", err);
+      } finally {
+        setLoadingBookings(false);
+      }
+    };
+
+    searchUserBookings();
+  }, [oldContact]);
+  const newDateStr = useMemo(() => {
+    if (!newDate) return "";
+    const y = newDate.getFullYear();
+    const m = String(newDate.getMonth() + 1).padStart(2, "0");
+    const d = String(newDate.getDate()).padStart(2, "0");
+    return `${y}-${m}-${d}`;
+  }, [newDate]);
+  const nextSixDates = useMemo(() => {
+    const arr: string[] = [];
+    // Obter a data atual no timezone do Brasil (UTC-3)
+    const now = new Date();
+    const brazilOffset = -3; // UTC-3
+    const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+    const brazilTime = new Date(utc + (brazilOffset * 3600000));
+    
+    for (let i = 0; i < 6; i++) {
+      const targetDate = new Date(brazilTime);
+      targetDate.setDate(brazilTime.getDate() + i);
+      const y = targetDate.getFullYear();
+      const m = String(targetDate.getMonth() + 1).padStart(2, "0");
+      const d = String(targetDate.getDate()).padStart(2, "0");
+      arr.push(`${y}-${m}-${d}`);
+    }
+    console.log('Data Brasil hoje (Reschedule):', brazilTime.toISOString().split('T')[0]);
+    console.log('Datas geradas (Reschedule):', arr);
+    return arr;
+  }, []);
+  async function fetchSlotsFor(dStr: string) {
+    try {
+      const {
+        data,
+        error
+      } = await supabase.functions.invoke("get_available_slots", {
+        body: {
+          date: dStr,
+          professional: professional || undefined
+        }
+      });
+      if (error) {
+        console.error('Erro ao buscar slots:', error);
+        throw error;
+      }
+      return data?.slots as string[] || [];
+    } catch (err) {
+      console.error('Erro na função fetchSlotsFor:', err);
+      return [];
+    }
+  }
+  async function fetchAllSlots() {
+    if (!config) return;
+    setLoadingSlots(true);
+    try {
+      const results: [string, string[]][] = await Promise.all(nextSixDates.map(async (d): Promise<[string, string[]]> => {
+        try {
+          const s = await fetchSlotsFor(d);
+          return [d, s];
+        } catch (error) {
+          console.error('Erro ao buscar slots para data', d, ':', error);
+          return [d, [] as string[]];
+        }
+      }));
+      const map: Record<string, string[]> = {};
+      results.forEach(([d, s]) => {
+        map[d] = s;
+      });
+      setSlotsByDate(map);
+    } catch (e: any) {
+      console.error('Erro geral ao buscar slots:', e);
+      toast.error("Erro ao buscar horários disponíveis.");
+    } finally {
+      setLoadingSlots(false);
+    }
+  }
+  useEffect(() => {
+    if (!config) return;
+    fetchAllSlots();
+  }, [config, professional]);
+  useEffect(() => {
+    if (!config) return;
+    const channel = supabase.channel("reschedule-slots").on("postgres_changes", {
+      event: "*",
+      schema: "public",
+      table: "agendamentos_robustos"
+    }, () => fetchAllSlots()).subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [config, professional]);
+  async function handleReschedule() {
+    if (!selectedBooking) {
+      toast.warning("Selecione o agendamento que deseja reagendar.");
+      return;
+    }
+    if (!selectedSlot || !selectedDateStr) {
+      toast.warning("Escolha uma nova data e horário.");
+      return;
+    }
+    try {
+      const {
+        data,
+        error
+      } = await supabase.functions.invoke("reschedule_booking", {
+        body: {
+          oldName: selectedBooking.NOME,
+          oldContact: selectedBooking.CONTATO,
+          oldDate: selectedBooking.DATA,
+          oldTime: selectedBooking.HORA,
+          newDate: selectedDateStr,
+          newTime: selectedSlot,
+          professional,
+          service
+        }
+      });
+      if (error) {
+        console.error('Erro na edge function reschedule_booking:', error);
+        
+        // Verificar se é erro de validação específico
+        if (error.message?.includes("não encontrado")) {
+          toast.error("Agendamento não encontrado. Verifique os dados informados.");
+        } else if (error.message?.includes("Horário não disponível")) {
+          toast.error("Horário não disponível para reagendamento.");
+        } else {
+          toast.error("Erro ao reagendar. Verifique os dados e tente novamente.");
+        }
+        return;
+      }
+
+      // Redirecionar para página de confirmação
+      navigate("/reschedule-confirmation", {
+        state: {
+          oldDate: selectedBooking.DATA,
+          oldTime: selectedBooking.HORA,
+          newDate: selectedDateStr,
+          newTime: selectedSlot,
+          contact: selectedBooking.CONTATO,
+          professional,
+          service
+        }
+      });
+    } catch (e: any) {
+      console.error('Erro completo ao reagendar:', e);
+      toast.error("Erro ao reagendar. Tente novamente.");
+    }
+  }
+  return <div className="min-h-screen bg-cover bg-center bg-no-repeat relative" style={{
+    backgroundImage: `url(${authBackground})`
+  }}>
+      <div className="absolute inset-0 bg-black/50"></div>
+      
+      <main className="container mx-auto px-6 py-8 relative z-10">
+        <header className="mb-8 text-center relative">
+          <Button variant="outline" className="absolute top-0 left-0 flex items-center gap-2" onClick={() => navigate("/")}>
+            <ArrowLeft className="h-4 w-4" />
+            Voltar
+          </Button>
+          <h1 className="text-3xl font-bold text-warning">Reagendar Atendimento</h1>
+          <p className="text-muted-foreground">Informe os dados do agendamento atual e escolha nova data/horário</p>
+        </header>
+
+        {/* Buscar agendamentos */}
+        <Card className="mb-6 bg-card/95 backdrop-blur-sm border-warning/20">
+          <CardHeader>
+            <CardTitle className="text-warning">Buscar Agendamentos</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="oldContact">Contato (Telefone)</Label>
+              <Input 
+                id="oldContact" 
+                value={oldContact} 
+                onChange={e => setOldContact(e.target.value)} 
+                placeholder="Digite seu telefone para buscar agendamentos" 
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Agendamentos encontrados */}
+        {oldContact && (
+          <Card className="mb-6 bg-card/95 backdrop-blur-sm border-warning/20">
+            <CardHeader>
+              <CardTitle className="text-warning">Seus Agendamentos</CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Selecione o agendamento que deseja reagendar
+              </p>
+            </CardHeader>
+            <CardContent>
+              {loadingBookings ? (
+                <p className="text-sm text-muted-foreground">Buscando agendamentos...</p>
+              ) : userBookings.length > 0 ? (
+                <div className="grid gap-3">
+                  {userBookings.map((booking) => (
+                    <div
+                      key={booking.id}
+                      className={cn(
+                        "p-4 border rounded-lg cursor-pointer transition-colors",
+                        selectedBooking?.id === booking.id
+                          ? "border-warning bg-warning/10"
+                          : "border-border hover:border-warning/50"
+                      )}
+                      onClick={() => setSelectedBooking(booking)}
+                    >
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
+                        <div>
+                          <span className="font-medium text-warning">Nome:</span>
+                          <p>{booking.NOME}</p>
+                        </div>
+                        <div>
+                          <span className="font-medium text-warning">Data:</span>
+                          <p>{format(new Date(booking.DATA), "dd/MM/yyyy", { locale: ptBR })}</p>
+                        </div>
+                        <div>
+                          <span className="font-medium text-warning">Horário:</span>
+                          <p>{booking.HORA}</p>
+                        </div>
+                        <div>
+                          <span className="font-medium text-warning">Profissional:</span>
+                          <p>{booking.PROFISSIONAL || "Não especificado"}</p>
+                        </div>
+                      </div>
+                      {booking.servico && (
+                        <div className="mt-2 text-sm">
+                          <span className="font-medium text-warning">Serviço:</span>
+                          <p>{booking.servico}</p>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  {oldContact ? "Nenhum agendamento futuro encontrado para este contato." : "Digite seu contato para buscar agendamentos."}
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+        <div className="grid gap-6 md:grid-cols-2">
+          {/* Nova Data */}
+          <Card className="bg-card/95 backdrop-blur-sm border-warning/20">
+            <CardHeader>
+              <CardTitle className="text-warning">Nova Data</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Popover open={isDatePickerOpen} onOpenChange={setIsDatePickerOpen}>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className={cn("w-full justify-start text-left font-normal border-warning/40", !newDate && "text-muted-foreground")}>
+                    <CalendarIcon />
+                    {newDate ? format(newDate, "PPP", {
+                    locale: ptBR
+                  }) : <span>Escolha uma nova data</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar 
+                    mode="single" 
+                    selected={newDate} 
+                    onSelect={newDate => {
+                      setNewDate(newDate);
+                      setIsDatePickerOpen(false);
+                    }} 
+                    initialFocus 
+                    className="p-3 pointer-events-auto"
+                    disabled={(date) => date < new Date()}
+                  />
+                </PopoverContent>
+              </Popover>
+            </CardContent>
+          </Card>
+
+          {/* Profissional */}
+          <Card className="bg-card/95 backdrop-blur-sm border-warning/20">
+            <CardHeader>
+              <CardTitle className="text-warning">Profissional</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Select value={professional || undefined} onValueChange={setProfessional}>
+                <SelectTrigger className="border-warning/40">
+                  <SelectValue placeholder="Selecione um profissional" />
+                </SelectTrigger>
+                <SelectContent>
+                  {pros.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </CardContent>
+          </Card>
+
+          {/* Serviço */}
+          <Card className="bg-card/95 backdrop-blur-sm border-warning/20">
+            <CardHeader>
+              <CardTitle className="text-warning">Serviço</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Select value={service || undefined} onValueChange={setService}>
+                <SelectTrigger className="border-warning/40">
+                  <SelectValue placeholder="Selecione um serviço" />
+                </SelectTrigger>
+                <SelectContent>
+                  {services.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Novos Horários */}
+        <Card className="mt-6 bg-card/95 backdrop-blur-sm border-warning/20">
+          <CardHeader>
+            <CardTitle className="text-warning">Novos Horários Disponíveis</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {!config ? <p className="text-sm text-muted-foreground">Carregando configurações...</p> : <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                {nextSixDates.map(d => <div key={d} className="space-y-2">
+                    <div className="text-sm font-medium mx-[5px] my-[5px] py-[5px] px-[5px] rounded-sm text-warning">
+                      {format(new Date(d), "PPP", {
+                  locale: ptBR
+                })}
+                    </div>
+                    {loadingSlots ? <div className="grid grid-cols-3 gap-2">
+                        {Array.from({
+                  length: 6
+                }).map((_, i) => <div key={i} className="h-9 rounded-md bg-muted animate-pulse" />)}
+                      </div> : slotsByDate[d]?.length ? <div className="flex flex-wrap gap-2">
+                        {slotsByDate[d].map(s => {
+                  const isSelected = selectedSlot === s && selectedDateStr === d;
+                  return <Button key={s} variant={isSelected ? "default" : "secondary"} onClick={() => {
+                    setSelectedSlot(s);
+                    setSelectedDateStr(d);
+                  }} size="sm" className={cn("mx-[4px] my-[4px] py-[4px] px-[4px] font-semibold text-base", isSelected && "bg-warning hover:bg-warning/90 text-warning-foreground")}>
+                              {s}
+                            </Button>;
+                })}
+                      </div> : <p className="text-sm text-muted-foreground">Nenhum horário disponível.</p>}
+                  </div>)}
+              </div>}
+          </CardContent>
+        </Card>
+
+        {/* Botão reagendar */}
+        <Card className="mt-6 bg-card/95 backdrop-blur-sm border-warning/20">
+          <CardContent className="pt-6">
+            <Button 
+              onClick={handleReschedule} 
+              disabled={!selectedBooking || !selectedSlot || !selectedDateStr} 
+              className="w-full bg-warning hover:bg-warning/90 text-warning-foreground text-xl font-bold"
+            >
+              REAGENDAR
+            </Button>
+            {!selectedBooking && oldContact && userBookings.length > 0 && (
+              <p className="mt-2 text-sm text-muted-foreground text-center">
+                Selecione um agendamento para reagendar
+              </p>
+            )}
+            {!selectedSlot && selectedBooking && (
+              <p className="mt-2 text-sm text-muted-foreground text-center">
+                Escolha uma nova data e horário
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      </main>
+    </div>;
+}
