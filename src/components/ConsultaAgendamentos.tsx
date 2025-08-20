@@ -34,43 +34,24 @@ export default function ConsultaAgendamentos() {
 
       setLoadingBookings(true);
       try {
-        // Data e hora atual do Brasil (Rio de Janeiro)
-        const now = new Date();
-        const brazilTime = new Date(now.toLocaleString("en-US", {timeZone: "America/Sao_Paulo"}));
-        const todayStr = brazilTime.toISOString().split('T')[0];
-        const currentTime = brazilTime.toTimeString().slice(0, 5); // HH:MM
-
-        const { data, error } = await supabase
-          .from("agendamentos_robustos")
-          .select("*")
-          .eq("CONTATO", contact)
-          .neq("STATUS", "CANCELADO")
-          .gte("DATA", todayStr)
-          .order("DATA", { ascending: true })
-          .order("HORA", { ascending: true });
+        // Usar edge function para consulta segura
+        const { data, error } = await supabase.functions.invoke('query_bookings', {
+          body: { 
+            contact,
+            senha
+          }
+        });
 
         if (error) {
-          console.error("Erro ao buscar agendamentos:", error);
+          console.error('Erro ao buscar agendamentos:', error);
+          setUserBookings([]);
           return;
         }
 
-        // Filtrar agendamentos válidos com base na senha (últimos 4 dígitos do UUID)
-        const validBookings = (data || []).filter((booking: Agendamento) => {
-          const last4Digits = booking.id.slice(-4);
-          const isValidPassword = senha === last4Digits;
-          
-          // Se for hoje, verificar se o horário ainda não passou
-          if (booking.DATA === todayStr) {
-            return isValidPassword && booking.HORA > currentTime;
-          }
-          
-          // Se for data futura, incluir
-          return isValidPassword && booking.DATA > todayStr;
-        });
-
-        setUserBookings(validBookings);
+        setUserBookings(data?.bookings || []);
       } catch (err) {
-        console.error("Erro na busca de agendamentos:", err);
+        console.error('Erro na consulta:', err);
+        setUserBookings([]);
       } finally {
         setLoadingBookings(false);
       }
