@@ -1,3 +1,4 @@
+
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,6 +16,7 @@ import { CalendarIcon, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import authBackground from "@/assets/auth-background.jpg";
 import ConsultaAgendamentos from "@/components/ConsultaAgendamentos";
+
 interface LojaConfig {
   opening_time?: string;
   closing_time?: string;
@@ -23,6 +25,7 @@ interface LojaConfig {
   escolha_serviços?: string;
   instructions?: string;
 }
+
 export default function Booking() {
   const navigate = useNavigate();
   const [config, setConfig] = useState<LojaConfig | null>(null);
@@ -39,6 +42,7 @@ export default function Booking() {
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
   const [selectedDateStr, setSelectedDateStr] = useState<string | null>(null);
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
+
   useEffect(() => {
     document.title = "Agendar atendimento | ÁSPERUS";
   }, []);
@@ -46,10 +50,7 @@ export default function Booking() {
   // Carregar configuração
   useEffect(() => {
     (async () => {
-      const {
-        data,
-        error
-      } = await supabase.from("info_loja").select("*").limit(1).maybeSingle();
+      const { data, error } = await supabase.from("info_loja").select("*").limit(1).maybeSingle();
       if (error) {
         console.error(error);
         toast.error("Não foi possível carregar as configurações.");
@@ -63,10 +64,7 @@ export default function Booking() {
   useEffect(() => {
     const loadProfissionaisEServicos = async () => {
       try {
-        const {
-          data,
-          error
-        } = await supabase.from("info_loja").select("nome_profissionais, escolha_serviços");
+        const { data, error } = await supabase.from("info_loja").select("nome_profissionais, escolha_serviços");
         if (error) {
           console.error("Erro ao carregar profissionais e serviços:", error);
           return;
@@ -88,6 +86,7 @@ export default function Booking() {
     };
     loadProfissionaisEServicos();
   }, []);
+
   const dateStr = useMemo(() => {
     if (!date) return "";
     const y = date.getFullYear();
@@ -95,13 +94,13 @@ export default function Booking() {
     const d = String(date.getDate()).padStart(2, "0");
     return `${y}-${m}-${d}`;
   }, [date]);
-  const baseDate = useMemo(() => date || new Date(), [date]);
 
   // Gerar próximas 6 datas a partir do dia atual (Brasil timezone)
   const nextSixDates = useMemo(() => {
     const arr: string[] = [];
-    // Usar data local do Brasil FORÇANDO ser 16 de agosto de 2025
-    const brazilTime = new Date(2025, 7, 16); // Mês 7 = agosto (0-indexado)
+    // Usar data atual real do Brasil (Rio de Janeiro/São Paulo)
+    const now = new Date();
+    const brazilTime = new Date(now.toLocaleString("en-US", {timeZone: "America/Sao_Paulo"}));
     
     for (let i = 0; i < 6; i++) {
       const targetDate = new Date(brazilTime);
@@ -111,7 +110,7 @@ export default function Booking() {
       const d = String(targetDate.getDate()).padStart(2, "0");
       arr.push(`${y}-${m}-${d}`);
     }
-    console.log('Data Brasil hoje (fixo):', '2025-08-16');
+    console.log('Data Brasil hoje:', brazilTime.toISOString().split('T')[0]);
     console.log('Datas geradas:', arr);
     return arr;
   }, []);
@@ -122,10 +121,7 @@ export default function Booking() {
       professional
     });
     try {
-      const {
-        data,
-        error
-      } = await supabase.functions.invoke("get_available_slots", {
+      const { data, error } = await supabase.functions.invoke("get_available_slots", {
         body: {
           date: dStr,
           professional: professional || undefined
@@ -142,6 +138,7 @@ export default function Booking() {
       return [];
     }
   }
+
   async function fetchAllSlots() {
     if (!config) {
       console.log('Não buscando slots - configuração não carregada');
@@ -194,6 +191,7 @@ export default function Booking() {
       supabase.removeChannel(channel);
     };
   }, [config, professional]);
+
   async function handleBook() {
     if (!name || !contact) {
       toast.warning("Preencha nome e contato.");
@@ -220,10 +218,7 @@ export default function Booking() {
         professional,
         service
       });
-      const {
-        data,
-        error
-      } = await supabase.functions.invoke("book_slot", {
+      const { data, error } = await supabase.functions.invoke("book_slot", {
         body: {
           date: selectedDateStr,
           time: selectedSlot,
@@ -256,9 +251,11 @@ export default function Booking() {
       toast.error(msg.includes("duplicate") ? "Horário indisponível." : msg);
     }
   }
-  return <div className="min-h-screen bg-cover bg-center bg-no-repeat relative" style={{
-    backgroundImage: `url(${authBackground})`
-  }}>
+
+  return (
+    <div className="min-h-screen bg-cover bg-center bg-no-repeat relative" style={{
+      backgroundImage: `url(${authBackground})`
+    }}>
       {/* Overlay escuro para melhor legibilidade */}
       <div className="absolute inset-0 bg-black/50"></div>
       
@@ -292,16 +289,14 @@ export default function Booking() {
                 <PopoverTrigger asChild>
                   <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !date && "text-muted-foreground")}>
                     <CalendarIcon />
-                    {date ? format(date, "PPP", {
-                    locale: ptBR
-                  }) : <span>Escolha uma data</span>}
+                    {date ? format(date, "PPP", { locale: ptBR }) : <span>Escolha uma data</span>}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
                   <Calendar mode="single" selected={date} onSelect={newDate => {
-                  setDate(newDate);
-                  setIsDatePickerOpen(false); // Fechar calendário após seleção
-                }} initialFocus className={cn("p-3 pointer-events-auto [&_.rdp-head]:hidden [&_.rdp-weekdays]:hidden")} />
+                    setDate(newDate);
+                    setIsDatePickerOpen(false); // Fechar calendário após seleção
+                  }} initialFocus className={cn("p-3 pointer-events-auto [&_.rdp-head]:hidden [&_.rdp-weekdays]:hidden")} />
                 </PopoverContent>
               </Popover>
             </CardContent>
@@ -354,30 +349,46 @@ export default function Booking() {
             <CardTitle>Horários Disponíveis</CardTitle>
           </CardHeader>
           <CardContent>
-            {!config ? <p className="text-sm text-muted-foreground">Carregando configurações...</p> : <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                {nextSixDates.map(d => <div key={d} className="space-y-2">
+            {!config ? <p className="text-sm text-muted-foreground">Carregando configurações...</p> : (
+              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                {nextSixDates.map(d => (
+                  <div key={d} className="space-y-2">
                     <div className="text-sm font-medium mx-[5px] my-[5px] py-[5px] px-[5px] rounded-sm">
-                      {format(new Date(d), "PPP", {
-                  locale: ptBR
-                })}
+                      {format(new Date(d), "PPP", { locale: ptBR })}
                     </div>
-                    {loadingSlots ? <div className="grid grid-cols-3 gap-2">
-                        {Array.from({
-                  length: 6
-                }).map((_, i) => <div key={i} className="h-9 rounded-md bg-muted animate-pulse" />)}
-                      </div> : slotsByDate[d]?.length ? <div className="flex flex-wrap gap-2">
+                    {loadingSlots ? (
+                      <div className="grid grid-cols-3 gap-2">
+                        {Array.from({ length: 6 }).map((_, i) => (
+                          <div key={i} className="h-9 rounded-md bg-muted animate-pulse" />
+                        ))}
+                      </div>
+                    ) : slotsByDate[d]?.length ? (
+                      <div className="flex flex-wrap gap-2">
                         {slotsByDate[d].map(s => {
-                  const isSelected = selectedSlot === s && selectedDateStr === d;
-                  return <Button key={s} variant={isSelected ? "default" : "secondary"} onClick={() => {
-                    setSelectedSlot(s);
-                    setSelectedDateStr(d);
-                  }} size="sm" className="mx-[4px] my-[4px] py-[4px] px-[4px] font-semibold text-base">
+                          const isSelected = selectedSlot === s && selectedDateStr === d;
+                          return (
+                            <Button
+                              key={s}
+                              variant={isSelected ? "default" : "secondary"}
+                              onClick={() => {
+                                setSelectedSlot(s);
+                                setSelectedDateStr(d);
+                              }}
+                              size="sm"
+                              className="mx-[4px] my-[4px] py-[4px] px-[4px] font-semibold text-base"
+                            >
                               {s}
-                            </Button>;
-                })}
-                      </div> : <p className="text-sm text-muted-foreground">Nenhum horário disponível.</p>}
-                  </div>)}
-              </div>}
+                            </Button>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">Nenhum horário disponível.</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -396,18 +407,25 @@ export default function Booking() {
               <Input id="contact" value={contact} onChange={e => setContact(e.target.value)} />
             </div>
             <div className="md:col-span-2">
-              <Button onClick={handleBook} disabled={!selectedSlot || !selectedDateStr || !name || !contact || !professional || !service} className="w-full text-slate-50 text-xl font-bold">
+              <Button
+                onClick={handleBook}
+                disabled={!selectedSlot || !selectedDateStr || !name || !contact || !professional || !service}
+                className="w-full text-slate-50 text-xl font-bold"
+              >
                 AGENDAR
               </Button>
-              {!selectedSlot && <p className="mt-2 text-sm text-muted-foreground">
+              {!selectedSlot && (
+                <p className="mt-2 text-sm text-muted-foreground">
                   Confirme e seja redirecionado(a) a confirmação de seu agendamento
-                </p>}
+                </p>
+              )}
             </div>
           </CardContent>
         </Card>
 
         {/* Confirmação */}
-        {booking && <Card className="mt-6 border-primary/40">
+        {booking && (
+          <Card className="mt-6 border-primary/40">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-primary">
                 <CheckCircle2 /> Agendamento confirmado
@@ -415,13 +433,13 @@ export default function Booking() {
             </CardHeader>
             <CardContent className="space-y-2">
               <p>
-                {format(new Date(booking.DATA), "PPP", {
-              locale: ptBR
-            })} às {String(booking.HORA).slice(0, 5)}
+                {format(new Date(booking.DATA), "PPP", { locale: ptBR })} às {String(booking.HORA).slice(0, 5)}
                 {booking.PROFISSIONAL ? ` com ${booking.PROFISSIONAL}` : ""}
               </p>
             </CardContent>
-          </Card>}
+          </Card>
+        )}
       </main>
-    </div>;
+    </div>
+  );
 }

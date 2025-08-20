@@ -1,3 +1,4 @@
+
 // deno-lint-ignore-file no-explicit-any
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -11,6 +12,7 @@ function toMinutes(t: string) {
   const [h, m] = t.split(":").map(Number);
   return h * 60 + m;
 }
+
 function toHHMM(mins: number) {
   const h = Math.floor(mins / 60).toString().padStart(2, "0");
   const m = (mins % 60).toString().padStart(2, "0");
@@ -113,13 +115,13 @@ serve(async (req) => {
     let available = slots.filter((s) => !bookedTimes.has(s));
 
     // Para a data de hoje, filtrar apenas horários futuros (timezone Brasil)
-    // FORÇANDO data atual como 16 de agosto de 2025
-    const brazilTime = new Date(2025, 7, 16, 15, 37); // 16 agosto 2025, 15:37
+    // Usar data atual real do Brasil
+    const now = new Date();
+    const brazilTime = new Date(now.toLocaleString("en-US", {timeZone: "America/Sao_Paulo"}));
+    const todayStr = brazilTime.toISOString().split('T')[0];
     
-    const todayStr = '2025-08-16';
-    
-    console.log('Data de hoje (Brasil fixo):', todayStr, 'Data solicitada:', date);
-    console.log('Hora atual Brasil (fixo):', '15:37');
+    console.log('Data de hoje (Brasil):', todayStr, 'Data solicitada:', date);
+    console.log('Hora atual Brasil:', brazilTime.toTimeString().slice(0, 5));
     
     // Se a data solicitada é anterior a hoje, retornar array vazio
     if (date < todayStr) {

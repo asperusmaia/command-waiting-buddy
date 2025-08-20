@@ -1,3 +1,4 @@
+
 // deno-lint-ignore-file no-explicit-any
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -31,11 +32,7 @@ serve(async (req) => {
       });
     }
 
-    // Log para debug do timezone
-    console.log('Data recebida no booking:', date);
-    console.log('Hora recebida no booking:', time);
-
-    // Não permite agendar em feriado
+    // Verificar se não é feriado
     const { data: feriado, error: feriadoErr } = await supabase
       .from("feriados")
       .select("data")
@@ -43,40 +40,58 @@ serve(async (req) => {
       .maybeSingle();
     if (feriadoErr) throw feriadoErr;
     if (feriado) {
-      return new Response(JSON.stringify({ error: "Não é possível agendar em feriados." }), {
+      return new Response(JSON.stringify({ error: "Não é possível agendar para feriados." }), {
         status: 400,
         headers: { "Content-Type": "application/json", ...corsHeaders },
       });
     }
 
-    // Tenta inserir; UNIQUE index bloqueará double booking (exceto cancelados via reutilização de slot)
-    const basePayload: any = {
-      NOME: name,
-      CONTATO: contact,
-      DATA: date,
-      HORA: time,
-    };
-    if (professional) basePayload.PROFISSIONAL = professional;
-    if (service) basePayload.servico = service;
-
-    // Inserir agendamento
-    const { data, error } = await supabase
+    // Verificar se o horário está disponível
+    const { data: conflicts, error: conflictError } = await supabase
       .from("agendamentos_robustos")
-      .insert(basePayload)
-      .select("id, DATA, HORA, NOME, CONTATO, PROFISSIONAL, servico, STATUS, created_at")
-      .maybeSingle();
+      .select("id")
+      .eq("DATA", date)
+      .eq("HORA", time)
+      .eq("PROFISSIONAL", professional)
+      .neq("STATUS", "CANCELADO");
 
-    if (error) {
-      // Unique violation code is 23505 typically
-      const msg = (error as any).message || String(error);
-      const status = msg.includes("duplicate") || msg.includes("already exists") ? 409 : 400;
-      return new Response(JSON.stringify({ error: msg }), {
-        status,
+    if (conflictError) throw conflictError;
+
+    if (conflicts && conflicts.length > 0) {
+      return new Response(JSON.stringify({ error: "Horário não disponível" }), {
+        status: 409,
         headers: { "Content-Type": "application/json", ...corsHeaders },
       });
     }
 
-    return new Response(JSON.stringify({ booking: data }), {
+    // Usar timezone correto do Brasil para inserção
+    const now = new Date();
+    const brazilTime = new Date(now.toLocaleString("en-US", {timeZone: "America/Sao_Paulo"}));
+    
+    // Criar agendamento
+    const { data: booking, error: bookingError } = await supabase
+      .from("agendamentos_robustos")
+      .insert({
+        DATA: date,
+        HORA: time,
+        NOME: name,
+        CONTATO: contact,
+        PROFISSIONAL: professional,
+        servico: service,
+        STATUS: "AGENDADO",
+        created_at: brazilTime.toISOString()
+      })
+      .select("*")
+      .maybeSingle();
+
+    if (bookingError) {
+      console.error('Erro ao criar agendamento:', bookingError);
+      throw bookingError;
+    }
+
+    console.log('Agendamento criado com sucesso:', booking);
+
+    return new Response(JSON.stringify({ booking }), {
       status: 200,
       headers: { "Content-Type": "application/json", ...corsHeaders },
     });

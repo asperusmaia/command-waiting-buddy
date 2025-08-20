@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,25 +20,25 @@ interface Agendamento {
 
 export default function ConsultaAgendamentos() {
   const [contact, setContact] = useState("");
+  const [senha, setSenha] = useState("");
   const [userBookings, setUserBookings] = useState<Agendamento[]>([]);
   const [loadingBookings, setLoadingBookings] = useState(false);
 
-  // Buscar agendamentos do usuário quando contato é preenchido
+  // Buscar agendamentos do usuário quando contato e senha são preenchidos
   useEffect(() => {
     const searchUserBookings = async () => {
-      if (!contact) {
+      if (!contact || !senha) {
         setUserBookings([]);
         return;
       }
 
       setLoadingBookings(true);
       try {
-        // Data atual do Brasil
+        // Data e hora atual do Brasil (Rio de Janeiro)
         const now = new Date();
-        const brazilOffset = -3;
-        const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
-        const brazilTime = new Date(utc + (brazilOffset * 3600000));
+        const brazilTime = new Date(now.toLocaleString("en-US", {timeZone: "America/Sao_Paulo"}));
         const todayStr = brazilTime.toISOString().split('T')[0];
+        const currentTime = brazilTime.toTimeString().slice(0, 5); // HH:MM
 
         const { data, error } = await supabase
           .from("agendamentos_robustos")
@@ -53,7 +54,21 @@ export default function ConsultaAgendamentos() {
           return;
         }
 
-        setUserBookings(data || []);
+        // Filtrar agendamentos válidos com base na senha (últimos 4 dígitos do UUID)
+        const validBookings = (data || []).filter((booking: Agendamento) => {
+          const last4Digits = booking.id.slice(-4);
+          const isValidPassword = senha === last4Digits;
+          
+          // Se for hoje, verificar se o horário ainda não passou
+          if (booking.DATA === todayStr) {
+            return isValidPassword && booking.HORA > currentTime;
+          }
+          
+          // Se for data futura, incluir
+          return isValidPassword && booking.DATA > todayStr;
+        });
+
+        setUserBookings(validBookings);
       } catch (err) {
         console.error("Erro na busca de agendamentos:", err);
       } finally {
@@ -62,14 +77,14 @@ export default function ConsultaAgendamentos() {
     };
 
     searchUserBookings();
-  }, [contact]);
+  }, [contact, senha]);
 
   return (
     <Card className="border-green-500/20 bg-card/95 backdrop-blur-sm">
       <CardHeader>
         <CardTitle className="text-green-600">Consultar Agendamento</CardTitle>
         <p className="text-sm text-muted-foreground">
-          Digite seu contato para consultar seus agendamentos
+          Digite seu contato e senha para consultar seus agendamentos
         </p>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -85,9 +100,11 @@ export default function ConsultaAgendamentos() {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="consultaUuid">Senha (4 dígitos)</Label>
+            <Label htmlFor="consultaSenha">Senha (4 dígitos)</Label>
             <Input 
-              id="consultaUuid" 
+              id="consultaSenha" 
+              value={senha}
+              onChange={e => setSenha(e.target.value)}
               placeholder="Digite os 4 dígitos" 
               className="border-green-500/40" 
               maxLength={4}
@@ -96,7 +113,7 @@ export default function ConsultaAgendamentos() {
         </div>
 
         {/* Agendamentos encontrados */}
-        {contact && (
+        {contact && senha && (
           <div className="mt-4">
             {loadingBookings ? (
               <p className="text-sm text-muted-foreground">Buscando agendamentos...</p>
@@ -137,7 +154,7 @@ export default function ConsultaAgendamentos() {
               </div>
             ) : (
               <p className="text-sm text-muted-foreground">
-                {contact ? "Nenhum agendamento futuro encontrado para este contato." : ""}
+                {contact && senha ? "Nenhum agendamento futuro encontrado ou senha incorreta." : ""}
               </p>
             )}
           </div>

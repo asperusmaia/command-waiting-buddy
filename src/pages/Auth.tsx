@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -27,34 +28,29 @@ export default function Auth() {
 
     setIsLoading(true);
     try {
-      // Buscar credenciais na tabela info_loja
-      const { data: authData, error: authError } = await supabase
-        .from("info_loja")
-        .select("auth_user")
-        .in("id", ["25c13784-2a16-4b37-9135-086b9a7c36da", "389f20fc-522c-4286-afce-f0cd289b8edb", "a4620b55-c933-463b-90c0-60ab533e1d99"]);
+      // Tentar fazer login direto com Supabase Auth
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email: email,
+        password: password,
+      });
 
       if (authError) {
-        console.error("Erro ao buscar credenciais:", authError);
-        throw authError;
+        console.error("Erro no login Supabase Auth:", authError);
+        toast.error("Credenciais inválidas ou erro no sistema de autenticação.");
+        return;
       }
 
-      const emailRecord = authData?.find(record => record.auth_user?.includes("@"));
-      const passwordRecord = authData?.find(record => record.auth_user && !record.auth_user?.includes("@"));
-
-      const validEmail = emailRecord?.auth_user;
-      const validPassword = passwordRecord?.auth_user;
-
-      if (email === validEmail && password === validPassword) {
+      if (authData?.user) {
         // Login bem-sucedido
         localStorage.setItem("admin_authenticated", "true");
         toast.success("Login realizado com sucesso!");
         navigate("/dashboard");
       } else {
-        toast.error("Credenciais inválidas.");
+        toast.error("Erro inesperado no login.");
       }
     } catch (e: any) {
       console.error("Erro no login:", e);
-      toast.error("Erro ao fazer login.");
+      toast.error("Erro ao fazer login. Verifique suas credenciais.");
     } finally {
       setIsLoading(false);
     }
