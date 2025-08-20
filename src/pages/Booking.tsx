@@ -100,11 +100,11 @@ export default function Booking() {
     const arr: string[] = [];
     // Usar data atual real do Brasil (Rio de Janeiro/São Paulo)
     const now = new Date();
+    // Forçar timezone do Brasil e criar Date object corretamente
     const brazilTime = new Date(now.toLocaleString("en-US", {timeZone: "America/Sao_Paulo"}));
     
     for (let i = 0; i < 6; i++) {
-      const targetDate = new Date(brazilTime);
-      targetDate.setDate(brazilTime.getDate() + i);
+      const targetDate = new Date(brazilTime.getFullYear(), brazilTime.getMonth(), brazilTime.getDate() + i);
       const y = targetDate.getFullYear();
       const m = String(targetDate.getMonth() + 1).padStart(2, "0");
       const d = String(targetDate.getDate()).padStart(2, "0");

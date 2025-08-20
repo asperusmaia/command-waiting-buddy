@@ -117,7 +117,8 @@ serve(async (req) => {
     // Para a data de hoje, filtrar apenas horários futuros (timezone Brasil)
     // Usar data atual real do Brasil
     const now = new Date();
-    const brazilTime = new Date(now.toLocaleString("en-US", {timeZone: "America/Sao_Paulo"}));
+    const brazilOffset = -3; // UTC-3 (horário de Brasília)
+    const brazilTime = new Date(now.getTime() + (brazilOffset * 60 * 60 * 1000));
     const todayStr = brazilTime.toISOString().split('T')[0];
     
     console.log('Data de hoje (Brasil):', todayStr, 'Data solicitada:', date);
