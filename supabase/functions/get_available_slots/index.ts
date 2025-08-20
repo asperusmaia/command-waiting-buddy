@@ -93,12 +93,12 @@ serve(async (req) => {
       slots.push(toHHMM(t));
     }
 
-    // Agendamentos existentes (ignorar cancelados)
+    // Agendamentos existentes (ignorar cancelados) - FILTRAR APENAS DA DATA SOLICITADA
     let baseQuery = supabase
       .from("agendamentos_robustos")
       .select("HORA, PROFISSIONAL, STATUS")
       .eq("DATA", date)
-      .neq("STATUS", "CANCELADO");
+      .in("STATUS", ["AGENDADO", "REAGENDADO"]); // Apenas status ativos
 
     if (professional) {
       baseQuery = baseQuery.eq("PROFISSIONAL", professional);
@@ -108,7 +108,11 @@ serve(async (req) => {
     const { data: ags, error: agsErr } = await baseQuery;
     if (agsErr) throw agsErr;
 
-    const bookedTimes = new Set((ags ?? []).map((a: any) => (typeof a.HORA === "string" ? a.HORA.slice(0,5) : String(a.HORA).slice(0,5))));
+    const bookedTimes = new Set((ags ?? []).map((a: any) => {
+      const hora = typeof a.HORA === "string" ? a.HORA : String(a.HORA);
+      // Garantir que sempre comparamos no formato HH:MM (remover segundos se existirem)
+      return hora.slice(0, 5);
+    }));
 
     // Se profissional informado: bloqueia horário se o mesmo pro já tem agendamento.
     // Caso contrário (sem profissional): considera bloqueado se qualquer agendamento existe nesse horário
