@@ -163,7 +163,16 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      store_info_public: {
+        Row: {
+          address: string | null
+          closing_time: string | null
+          maps_url: string | null
+          opening_time: string | null
+          slot_interval_minutes: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       [_ in never]: never
