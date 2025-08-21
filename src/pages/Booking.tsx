@@ -99,13 +99,17 @@ export default function Booking() {
   const nextSixDates = useMemo(() => {
     const arr: string[] = [];
     
-    // Usar UTC e ajustar para timezone do Brasil (UTC-3)
-    const now = new Date();
-    const brazilOffset = -3; // UTC-3 (horário de Brasília)
-    const brazilTime = new Date(now.getTime() + (brazilOffset * 60 * 60 * 1000));
+    // Obter data atual do Brasil usando toLocaleString
+    const brazilTime = new Date().toLocaleString("en-CA", {
+      timeZone: "America/Sao_Paulo",
+      year: "numeric",
+      month: "2-digit", 
+      day: "2-digit"
+    }).split('T')[0]; // Formato YYYY-MM-DD
     
-    // Garantir que sempre começamos com a data atual do Brasil
-    const today = new Date(brazilTime.getFullYear(), brazilTime.getMonth(), brazilTime.getDate());
+    // Converter para objeto Date baseado na data local do Brasil
+    const [year, month, day] = brazilTime.split('-').map(Number);
+    const today = new Date(year, month - 1, day); // month é 0-indexed
     
     for (let i = 0; i < 6; i++) {
       const targetDate = new Date(today);
@@ -117,7 +121,7 @@ export default function Booking() {
       arr.push(`${y}-${m}-${d}`);
     }
     
-    console.log('Data Brasil hoje:', brazilTime.toISOString().split('T')[0]);
+    console.log('Data Brasil hoje:', brazilTime);
     console.log('Datas geradas:', arr);
     return arr;
   }, []);
