@@ -82,6 +82,7 @@ export type Database = {
           id: number
           nome: string
           serviços_preferidos: string
+          user_id: string | null
         }
         Insert: {
           contato: string
@@ -90,6 +91,7 @@ export type Database = {
           id?: number
           nome: string
           serviços_preferidos: string
+          user_id?: string | null
         }
         Update: {
           contato?: string
@@ -98,6 +100,7 @@ export type Database = {
           id?: number
           nome?: string
           serviços_preferidos?: string
+          user_id?: string | null
         }
         Relationships: []
       }
