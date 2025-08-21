@@ -98,18 +98,25 @@ export default function Booking() {
   // Gerar próximas 6 datas a partir do dia atual (Brasil timezone)
   const nextSixDates = useMemo(() => {
     const arr: string[] = [];
-    // Usar data atual real do Brasil (Rio de Janeiro/São Paulo)
+    
+    // Usar UTC e ajustar para timezone do Brasil (UTC-3)
     const now = new Date();
-    // Forçar timezone do Brasil e criar Date object corretamente
-    const brazilTime = new Date(now.toLocaleString("en-US", {timeZone: "America/Sao_Paulo"}));
+    const brazilOffset = -3; // UTC-3 (horário de Brasília)
+    const brazilTime = new Date(now.getTime() + (brazilOffset * 60 * 60 * 1000));
+    
+    // Garantir que sempre começamos com a data atual do Brasil
+    const today = new Date(brazilTime.getFullYear(), brazilTime.getMonth(), brazilTime.getDate());
     
     for (let i = 0; i < 6; i++) {
-      const targetDate = new Date(brazilTime.getFullYear(), brazilTime.getMonth(), brazilTime.getDate() + i);
+      const targetDate = new Date(today);
+      targetDate.setDate(today.getDate() + i);
+      
       const y = targetDate.getFullYear();
       const m = String(targetDate.getMonth() + 1).padStart(2, "0");
       const d = String(targetDate.getDate()).padStart(2, "0");
       arr.push(`${y}-${m}-${d}`);
     }
+    
     console.log('Data Brasil hoje:', brazilTime.toISOString().split('T')[0]);
     console.log('Datas geradas:', arr);
     return arr;
