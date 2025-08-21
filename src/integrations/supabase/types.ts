@@ -104,6 +104,36 @@ export type Database = {
         }
         Relationships: []
       }
+      customer_auth: {
+        Row: {
+          contact: string
+          created_at: string | null
+          failed_attempts: number | null
+          id: string
+          locked_until: string | null
+          password_hash: string
+          updated_at: string | null
+        }
+        Insert: {
+          contact: string
+          created_at?: string | null
+          failed_attempts?: number | null
+          id?: string
+          locked_until?: string | null
+          password_hash: string
+          updated_at?: string | null
+        }
+        Update: {
+          contact?: string
+          created_at?: string | null
+          failed_attempts?: number | null
+          id?: string
+          locked_until?: string | null
+          password_hash?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       feriados: {
         Row: {
           data: string
@@ -175,7 +205,10 @@ export type Database = {
       }
     }
     Functions: {
-      [_ in never]: never
+      hash_password: {
+        Args: { password: string }
+        Returns: string
+      }
     }
     Enums: {
       status_agendamento_robusto: "AGENDADO" | "REAGENDADO" | "CANCELADO"
