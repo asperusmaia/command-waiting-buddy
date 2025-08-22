@@ -364,8 +364,8 @@ export default function Booking() {
               <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 {nextSixDates.map(d => (
                   <div key={d} className="space-y-2">
-                    <div className="text-sm font-medium mx-[5px] my-[5px] py-[5px] px-[5px] rounded-sm">
-                      {format(new Date(d), "PPP", { locale: ptBR })}
+                     <div className="text-sm font-medium mx-[5px] my-[5px] py-[5px] px-[5px] rounded-sm">
+                      {format(new Date(d + 'T12:00:00'), "PPP", { locale: ptBR })}
                     </div>
                     {loadingSlots ? (
                       <div className="grid grid-cols-3 gap-2">
