@@ -105,12 +105,13 @@ export default function Reschedule() {
 
       setLoadingBookings(true);
       try {
-        // Data atual do Brasil
-        const now = new Date();
-        const brazilOffset = -3;
-        const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
-        const brazilTime = new Date(utc + (brazilOffset * 3600000));
-        const todayStr = brazilTime.toISOString().split('T')[0];
+        // Data atual do Brasil usando toLocaleString
+        const todayStr = new Date().toLocaleString("en-CA", {
+          timeZone: "America/Sao_Paulo",
+          year: "numeric",
+          month: "2-digit", 
+          day: "2-digit"
+        }).split('T')[0]; // Formato YYYY-MM-DD
 
         const { data, error } = await supabase
           .from("agendamentos_robustos")
@@ -145,21 +146,30 @@ export default function Reschedule() {
   }, [newDate]);
   const nextSixDates = useMemo(() => {
     const arr: string[] = [];
-    // Usar data atual do Brasil
-    const now = new Date();
-    const brazilOffset = -3;
-    const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
-    const brazilTime = new Date(utc + (brazilOffset * 3600000));
+    
+    // Obter data atual do Brasil usando toLocaleString
+    const brazilTime = new Date().toLocaleString("en-CA", {
+      timeZone: "America/Sao_Paulo",
+      year: "numeric",
+      month: "2-digit", 
+      day: "2-digit"
+    }).split('T')[0]; // Formato YYYY-MM-DD
+    
+    // Converter para objeto Date baseado na data local do Brasil
+    const [year, month, day] = brazilTime.split('-').map(Number);
+    const today = new Date(year, month - 1, day); // month é 0-indexed
     
     for (let i = 0; i < 6; i++) {
-      const targetDate = new Date(brazilTime);
-      targetDate.setDate(brazilTime.getDate() + i);
+      const targetDate = new Date(today);
+      targetDate.setDate(today.getDate() + i);
+      
       const y = targetDate.getFullYear();
       const m = String(targetDate.getMonth() + 1).padStart(2, "0");
       const d = String(targetDate.getDate()).padStart(2, "0");
       arr.push(`${y}-${m}-${d}`);
     }
-    console.log('Data Brasil hoje (Reschedule):', brazilTime.toISOString().split('T')[0]);
+    
+    console.log('Data Brasil hoje (Reschedule):', brazilTime);
     console.log('Datas geradas (Reschedule):', arr);
     return arr;
   }, []);
