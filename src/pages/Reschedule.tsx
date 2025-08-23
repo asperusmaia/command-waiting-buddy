@@ -145,8 +145,11 @@ export default function Reschedule() {
   }, [newDate]);
   const nextSixDates = useMemo(() => {
     const arr: string[] = [];
-    // Usar data local do Brasil FORÇANDO ser 16 de agosto de 2025
-    const brazilTime = new Date(2025, 7, 16); // Mês 7 = agosto (0-indexado)
+    // Usar data atual do Brasil
+    const now = new Date();
+    const brazilOffset = -3;
+    const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+    const brazilTime = new Date(utc + (brazilOffset * 3600000));
     
     for (let i = 0; i < 6; i++) {
       const targetDate = new Date(brazilTime);
@@ -156,7 +159,7 @@ export default function Reschedule() {
       const d = String(targetDate.getDate()).padStart(2, "0");
       arr.push(`${y}-${m}-${d}`);
     }
-    console.log('Data Brasil hoje (Reschedule fixo):', '2025-08-16');
+    console.log('Data Brasil hoje (Reschedule):', brazilTime.toISOString().split('T')[0]);
     console.log('Datas geradas (Reschedule):', arr);
     return arr;
   }, []);
