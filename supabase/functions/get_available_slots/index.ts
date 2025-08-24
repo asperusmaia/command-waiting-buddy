@@ -53,6 +53,15 @@ serve(async (req) => {
       });
     }
 
+    // Verificar se é domingo (0 = domingo)
+    const dateObj = new Date(date + 'T12:00:00');
+    if (dateObj.getDay() === 0) {
+      return new Response(
+        JSON.stringify({ slots: [], message: "Domingo - Não há atendimento" }),
+        { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
     // Feriados
     const { data: feriado, error: feriadoErr } = await supabase
       .from("feriados")

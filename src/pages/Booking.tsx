@@ -95,7 +95,7 @@ export default function Booking() {
     return `${y}-${m}-${d}`;
   }, [date]);
 
-  // Gerar próximas 6 datas a partir do dia atual (Brasil timezone)
+  // Gerar próximas 6 datas a partir do dia atual (Brasil timezone) - excluindo domingos
   const nextSixDates = useMemo(() => {
     const arr: string[] = [];
     
@@ -111,18 +111,23 @@ export default function Booking() {
     const [year, month, day] = brazilTime.split('-').map(Number);
     const today = new Date(year, month - 1, day); // month é 0-indexed
     
-    for (let i = 0; i < 6; i++) {
+    let i = 0;
+    while (arr.length < 6) {
       const targetDate = new Date(today);
       targetDate.setDate(today.getDate() + i);
       
-      const y = targetDate.getFullYear();
-      const m = String(targetDate.getMonth() + 1).padStart(2, "0");
-      const d = String(targetDate.getDate()).padStart(2, "0");
-      arr.push(`${y}-${m}-${d}`);
+      // Pular domingos (0 = domingo)
+      if (targetDate.getDay() !== 0) {
+        const y = targetDate.getFullYear();
+        const m = String(targetDate.getMonth() + 1).padStart(2, "0");
+        const d = String(targetDate.getDate()).padStart(2, "0");
+        arr.push(`${y}-${m}-${d}`);
+      }
+      i++;
     }
     
     console.log('Data Brasil hoje:', brazilTime);
-    console.log('Datas geradas:', arr);
+    console.log('Datas geradas (sem domingos):', arr);
     return arr;
   }, []);
 

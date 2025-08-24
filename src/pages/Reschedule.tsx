@@ -159,18 +159,23 @@ export default function Reschedule() {
     const [year, month, day] = brazilTime.split('-').map(Number);
     const today = new Date(year, month - 1, day); // month é 0-indexed
     
-    for (let i = 0; i < 6; i++) {
+    let i = 0;
+    while (arr.length < 6) {
       const targetDate = new Date(today);
       targetDate.setDate(today.getDate() + i);
       
-      const y = targetDate.getFullYear();
-      const m = String(targetDate.getMonth() + 1).padStart(2, "0");
-      const d = String(targetDate.getDate()).padStart(2, "0");
-      arr.push(`${y}-${m}-${d}`);
+      // Pular domingos (0 = domingo)
+      if (targetDate.getDay() !== 0) {
+        const y = targetDate.getFullYear();
+        const m = String(targetDate.getMonth() + 1).padStart(2, "0");
+        const d = String(targetDate.getDate()).padStart(2, "0");
+        arr.push(`${y}-${m}-${d}`);
+      }
+      i++;
     }
     
     console.log('Data Brasil hoje (Reschedule):', brazilTime);
-    console.log('Datas geradas (Reschedule):', arr);
+    console.log('Datas geradas sem domingos (Reschedule):', arr);
     return arr;
   }, []);
   async function fetchSlotsFor(dStr: string) {
