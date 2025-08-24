@@ -430,7 +430,7 @@ export default function Reschedule() {
                     }} 
                     initialFocus 
                     className="p-3 pointer-events-auto"
-                    disabled={(date) => date < new Date()}
+                    disabled={(date) => date < new Date() || date.getDay() === 0}
                   />
                 </PopoverContent>
               </Popover>
