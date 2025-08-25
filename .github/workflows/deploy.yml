@@ -37,9 +37,13 @@ jobs:
         run: npm run build
         env:
           GITHUB_REPOSITORY: ${{ github.repository }}
+          NODE_ENV: production
         
       - name: Setup Pages
         uses: actions/configure-pages@v5
+        
+      - name: Copy base.html to dist
+        run: cp public/base.html dist/base.html
         
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
