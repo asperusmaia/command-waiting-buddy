@@ -24,6 +24,8 @@ const queryClient = new QueryClient({
 });
 
 const App = () => {
+  console.log("App component function called");
+  
   const [isReady, setIsReady] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -31,6 +33,7 @@ const App = () => {
   useEffect(() => {
     console.log("App component mounted - GitHub Pages optimized");
     console.log("Location:", window.location.href);
+    console.log("Supabase client status:", !!supabase);
     
     // Aplicar tema escuro
     document.documentElement.classList.add('dark');
