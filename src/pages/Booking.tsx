@@ -277,21 +277,42 @@ export default function Booking() {
       
       <main className="container mx-auto px-6 py-8 relative z-10">
         <header className="mb-8 text-center relative">
-          <div className="absolute top-0 left-0 flex gap-2">
-            <Button onClick={() => navigate("/cancel")} className="text-slate-50 bg-red-600 hover:bg-red-500">
-              CANCELAR
-            </Button>
-            <Button onClick={() => navigate("/reschedule")} className="bg-warning hover:bg-warning/90 text-slate-50">
-              REAGENDAR
-            </Button>
+          {/* Botões superiores com layout responsivo */}
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-6 sm:mb-8">
+            <div className="flex gap-2 order-2 sm:order-1">
+              <Button 
+                onClick={() => navigate("/cancel")} 
+                className="text-slate-50 bg-red-600 hover:bg-red-500 text-xs sm:text-sm px-3 sm:px-4"
+              >
+                CANCELAR
+              </Button>
+              <Button 
+                onClick={() => navigate("/reschedule")} 
+                className="bg-warning hover:bg-warning/90 text-slate-50 text-xs sm:text-sm px-3 sm:px-4"
+              >
+                REAGENDAR
+              </Button>
+            </div>
+            <div className="order-1 sm:order-2">
+              <Button 
+                variant="outline" 
+                onClick={() => navigate("/auth")}
+                className="text-xs sm:text-sm px-3 sm:px-4"
+              >
+                ACESSO ADM
+              </Button>
+            </div>
           </div>
-          <div className="absolute top-0 right-0">
-            <Button variant="outline" onClick={() => navigate("/auth")}>
-              ACESSO ADM
-            </Button>
+          
+          {/* Título responsivo */}
+          <div className="space-y-2">
+            <h1 className="font-bold text-primary text-2xl sm:text-3xl md:text-4xl lg:text-5xl">
+              Agendar Atendimento
+            </h1>
+            <p className="text-muted-foreground text-sm sm:text-base">
+              Informe Seus Dados para Agendamento
+            </p>
           </div>
-          <h1 className="font-bold text-primary py-0 mx-0 my-0 px-0 text-4xl">Agendar Atendimento</h1>
-          <p className="text-muted-foreground py-[4px]">Informe Seus Dados para Agendamento</p>
         </header>
 
         <div className="grid gap-6 md:grid-cols-3">
