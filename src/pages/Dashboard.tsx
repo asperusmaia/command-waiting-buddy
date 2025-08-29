@@ -5,6 +5,7 @@ import { AgendamentosList } from "@/components/AgendamentosList";
 import { StatsCards } from "@/components/StatsCards";
 import { ChartsSection } from "@/components/ChartsSection";
 import { PainelAgendamentos } from "@/components/PainelAgendamentos";
+import { QuadroEfetivados } from "@/components/QuadroEfetivados";
 
 export const Dashboard = () => {
   useEffect(() => {
@@ -28,6 +29,13 @@ export const Dashboard = () => {
 
         {/* Cards de Estatísticas */}
         <StatsCards />
+
+        {/* Quadro de Efetivados do Dia */}
+        <div className="mb-8">
+          <div className="grid gap-6 md:grid-cols-4">
+            <QuadroEfetivados />
+          </div>
+        </div>
 
         {/* Lista de Agendamentos Segmentados */}
         <div className="mb-8">

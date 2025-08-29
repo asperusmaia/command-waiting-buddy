@@ -12,6 +12,7 @@ export interface Agendamento {
   PROFISSIONAL: string;
   servico?: string; // Usando nome correto da coluna (minúsculo)
   created_at: string;
+  status_final?: string; // Novo campo para status final
 }
 
 export const useAgendamentos = (dataFilter?: string) => {

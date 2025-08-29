@@ -27,6 +27,7 @@ export type Database = {
           STATUS:
             | Database["public"]["Enums"]["status_agendamento_robusto"]
             | null
+          status_final: string | null
         }
         Insert: {
           CONTATO?: string | null
@@ -40,6 +41,7 @@ export type Database = {
           STATUS?:
             | Database["public"]["Enums"]["status_agendamento_robusto"]
             | null
+          status_final?: string | null
         }
         Update: {
           CONTATO?: string | null
@@ -53,6 +55,7 @@ export type Database = {
           STATUS?:
             | Database["public"]["Enums"]["status_agendamento_robusto"]
             | null
+          status_final?: string | null
         }
         Relationships: []
       }
