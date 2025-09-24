@@ -64,6 +64,18 @@ serve(async (req) => {
       });
     }
 
+    // Gerar senha de 4 dígitos alfanuméricos
+    const generatePassword = () => {
+      const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+      let result = '';
+      for (let i = 0; i < 4; i++) {
+        result += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      return result;
+    };
+    
+    const senha = generatePassword();
+
     // Usar timezone correto do Brasil para inserção
     const now = new Date();
     const brazilTime = new Date(now.toLocaleString("en-US", {timeZone: "America/Sao_Paulo"}));
@@ -79,6 +91,7 @@ serve(async (req) => {
         PROFISSIONAL: professional,
         servico: service,
         STATUS: "AGENDADO",
+        senha: senha,
         created_at: brazilTime.toISOString()
       })
       .select("*")

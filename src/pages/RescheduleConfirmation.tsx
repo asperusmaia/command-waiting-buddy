@@ -21,7 +21,7 @@ export default function RescheduleConfirmation() {
     return null;
   }
 
-  const { oldDate, oldTime, newDate, newTime, contact, professional, service } = state;
+  const { oldDate, oldTime, newDate, newTime, contact, professional, service, senha } = state;
 
   return (
     <div 
@@ -120,10 +120,12 @@ export default function RescheduleConfirmation() {
                   </div>
                 </div>
                 
-                <div className="text-sm font-mono text-warning mt-3 p-2 bg-warning/10 rounded border border-warning/40">
-                  ATENÇÃO!!!<br/>
-                  Guarde esta SENHA para reagendar ou cancelar: <strong>{contact.replace(/\D/g, '').slice(-4)}</strong>
-                </div>
+                {senha && (
+                  <div className="text-sm font-mono text-warning mt-3 p-2 bg-warning/10 rounded border border-warning/40">
+                    ATENÇÃO!!!<br/>
+                    Guarde esta SENHA para reagendar ou cancelar: <strong>{senha}</strong>
+                  </div>
+                )}
               </div>
 
               <div className="text-center space-y-4">

@@ -287,7 +287,8 @@ export default function Reschedule() {
           newTime: selectedSlot,
           contact: selectedBooking.CONTATO,
           professional,
-          service
+          service,
+          senha: data?.booking?.senha
         }
       });
     } catch (e: any) {

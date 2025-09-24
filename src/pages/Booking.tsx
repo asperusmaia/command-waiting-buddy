@@ -258,7 +258,8 @@ export default function Booking() {
           name,
           contact,
           professional,
-          service
+          service,
+          senha: data?.booking?.senha
         }
       });
     } catch (e: any) {

@@ -95,11 +95,24 @@ serve(async (req) => {
       });
     }
 
+    // Gerar nova senha de 4 dígitos alfanuméricos
+    const generatePassword = () => {
+      const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+      let result = '';
+      for (let i = 0; i < 4; i++) {
+        result += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      return result;
+    };
+    
+    const novaSenha = generatePassword();
+
     // Atualizar o agendamento
     const updatePayload: any = {
       DATA: newDate,
       HORA: newTime,
-      STATUS: "REAGENDADO"
+      STATUS: "REAGENDADO",
+      senha: novaSenha
     };
 
     if (professional) updatePayload.PROFISSIONAL = professional;

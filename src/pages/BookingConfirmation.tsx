@@ -14,6 +14,7 @@ interface BookingData {
   contact: string;
   professional: string;
   service: string;
+  senha?: string;
 }
 export default function BookingConfirmation() {
   const location = useLocation();
@@ -126,6 +127,17 @@ export default function BookingConfirmation() {
                     <p className="text-sm text-muted-foreground">{bookingData.contact}</p>
                   </div>
                 </div>
+
+                {bookingData.senha && (
+                  <div className="flex items-center gap-3 p-3 bg-primary/10 rounded-lg border border-primary/40">
+                    <FileText className="w-5 h-5 text-primary" />
+                    <div>
+                      <p className="font-medium text-primary">Senha para Consulta</p>
+                      <p className="text-lg font-mono font-bold text-primary">{bookingData.senha}</p>
+                      <p className="text-xs text-muted-foreground">Guarde esta senha para reagendar ou cancelar</p>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Informações da loja */}
