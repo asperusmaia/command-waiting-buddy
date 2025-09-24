@@ -170,10 +170,7 @@ export default function BookingConfirmation() {
                   <li>• Chegue com 10 minutos de antecedência.</li>
                   <li>• Aceitamos pagamento em dinheiro, Pix e cartões de crédito/débito.</li>
                   <li>• Em caso de cancelamento, entre em contato com antecedência.</li>
-                  <li>• Confirme seu agendamento, preferencialmente um dia antes, através do contato da loja informado acima.
-
-
-• Temos uma tolerância de 15 minutos de atraso. Após esse tempo, o horário será cancelado e será necessário um novo agendamento</li>
+                  <li>• A tolerância para atrasos é de 15 minutos Após esse tempo, o horário será cancelado e será necessário um novo agendamento.</li>
                 </ul>
               </div>
 
