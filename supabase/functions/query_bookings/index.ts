@@ -57,10 +57,9 @@ serve(async (req) => {
       throw error;
     }
 
-    // Filtrar agendamentos válidos com base na senha (últimos 4 dígitos do UUID)
+    // Filtrar agendamentos válidos com base na senha da coluna 'senha'
     const validBookings = (data || []).filter((booking: any) => {
-      const last4Digits = booking.id.slice(-4);
-      const isValidPassword = senha === last4Digits;
+      const isValidPassword = senha === booking.senha;
       
       if (!isValidPassword) return false;
       
