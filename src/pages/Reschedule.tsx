@@ -24,6 +24,7 @@ interface Agendamento {
   PROFISSIONAL: string;
   servico: string;
   STATUS: string;
+  senha: string;
 }
 interface LojaConfig {
   opening_time?: string;
@@ -35,10 +36,8 @@ interface LojaConfig {
 export default function Reschedule() {
   const navigate = useNavigate();
   const [config, setConfig] = useState<LojaConfig | null>(null);
-  const [oldName, setOldName] = useState("");
   const [oldContact, setOldContact] = useState("");
-  const [oldDate, setOldDate] = useState("");
-  const [oldTime, setOldTime] = useState("");
+  const [senha, setSenha] = useState("");
   const [newDate, setNewDate] = useState<Date | undefined>(undefined);
   const [professional, setProfessional] = useState<string>("");
   const [slotsByDate, setSlotsByDate] = useState<Record<string, string[]>>({});
@@ -95,48 +94,39 @@ export default function Reschedule() {
     loadProfissionaisEServicos();
   }, []);
 
-  // Buscar agendamentos do usuário quando dados são preenchidos
+  // Buscar agendamentos do usuário quando contato e senha são preenchidos
   useEffect(() => {
-    const searchUserBookings = async () => {
-      if (!oldContact) {
-        setUserBookings([]);
-        return;
-      }
+    if (oldContact.length >= 10 && senha.length === 4) {
+      const searchUserBookings = async () => {
+        setLoadingBookings(true);
+        try {
+          const { data, error } = await supabase.functions.invoke('query_bookings', {
+            body: { 
+              contact: oldContact,
+              senha
+            }
+          });
 
-      setLoadingBookings(true);
-      try {
-        // Data atual do Brasil usando toLocaleString
-        const todayStr = new Date().toLocaleString("en-CA", {
-          timeZone: "America/Sao_Paulo",
-          year: "numeric",
-          month: "2-digit", 
-          day: "2-digit"
-        }).split('T')[0]; // Formato YYYY-MM-DD
+          if (error) {
+            console.error("Erro ao buscar agendamentos:", error);
+            setUserBookings([]);
+            return;
+          }
 
-        const { data, error } = await supabase
-          .from("agendamentos_robustos")
-          .select("*")
-          .eq("CONTATO", oldContact)
-          .neq("STATUS", "CANCELADO")
-          .gte("DATA", todayStr)
-          .order("DATA", { ascending: true })
-          .order("HORA", { ascending: true });
-
-        if (error) {
-          console.error("Erro ao buscar agendamentos:", error);
-          return;
+          setUserBookings(data?.bookings || []);
+        } catch (err) {
+          console.error("Erro na busca de agendamentos:", err);
+          setUserBookings([]);
+        } finally {
+          setLoadingBookings(false);
         }
+      };
 
-        setUserBookings(data || []);
-      } catch (err) {
-        console.error("Erro na busca de agendamentos:", err);
-      } finally {
-        setLoadingBookings(false);
-      }
-    };
-
-    searchUserBookings();
-  }, [oldContact]);
+      searchUserBookings();
+    } else {
+      setUserBookings([]);
+    }
+  }, [oldContact, senha]);
   const newDateStr = useMemo(() => {
     if (!newDate) return "";
     const y = newDate.getFullYear();
@@ -261,7 +251,8 @@ export default function Reschedule() {
           newDate: selectedDateStr,
           newTime: selectedSlot,
           professional,
-          service
+          service,
+          senha: selectedBooking.senha
         }
       });
       if (error) {
@@ -328,12 +319,14 @@ export default function Reschedule() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="oldUuid">Senha (4 dígitos)</Label>
+                <Label htmlFor="senha">Senha (4 dígitos)</Label>
                 <Input 
-                  id="oldUuid" 
+                  id="senha" 
                   placeholder="Digite os 4 dígitos" 
                   className="border-warning/40" 
                   maxLength={4}
+                  value={senha}
+                  onChange={(e) => setSenha(e.target.value)}
                 />
               </div>
             </div>
@@ -341,7 +334,7 @@ export default function Reschedule() {
         </Card>
 
         {/* Agendamentos encontrados */}
-        {oldContact && (
+        {oldContact && senha.length === 4 && (
           <Card className="mb-6 bg-card/95 backdrop-blur-sm border-warning/20">
             <CardHeader>
               <CardTitle className="text-warning">Seus Agendamentos</CardTitle>

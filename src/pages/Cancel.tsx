@@ -25,6 +25,7 @@ interface Agendamento {
 export default function Cancel() {
   const navigate = useNavigate();
   const [contact, setContact] = useState("");
+  const [senha, setSenha] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [userBookings, setUserBookings] = useState<Agendamento[]>([]);
   const [loadingBookings, setLoadingBookings] = useState(false);
@@ -33,47 +34,39 @@ export default function Cancel() {
     document.title = "Cancelar atendimento | ÁSPERUS";
   }, []);
 
-  // Buscar agendamentos do usuário quando contato é preenchido
+  // Buscar agendamentos do usuário quando contato e senha são preenchidos
   useEffect(() => {
-    const searchUserBookings = async () => {
-      if (!contact) {
-        setUserBookings([]);
-        return;
-      }
+    if (contact.length >= 10 && senha.length === 4) {
+      const searchUserBookings = async () => {
+        setLoadingBookings(true);
+        try {
+          const { data, error } = await supabase.functions.invoke('query_bookings', {
+            body: { 
+              contact,
+              senha
+            }
+          });
 
-      setLoadingBookings(true);
-      try {
-        // Data atual do Brasil
-        const now = new Date();
-        const brazilOffset = -3;
-        const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
-        const brazilTime = new Date(utc + (brazilOffset * 3600000));
-        const todayStr = brazilTime.toISOString().split('T')[0];
+          if (error) {
+            console.error("Erro ao buscar agendamentos:", error);
+            setUserBookings([]);
+            return;
+          }
 
-        const { data, error } = await supabase
-          .from("agendamentos_robustos")
-          .select("*")
-          .eq("CONTATO", contact)
-          .neq("STATUS", "CANCELADO")
-          .gte("DATA", todayStr)
-          .order("DATA", { ascending: true })
-          .order("HORA", { ascending: true });
-
-        if (error) {
-          console.error("Erro ao buscar agendamentos:", error);
-          return;
+          setUserBookings(data?.bookings || []);
+        } catch (err) {
+          console.error("Erro na busca de agendamentos:", err);
+          setUserBookings([]);
+        } finally {
+          setLoadingBookings(false);
         }
+      };
 
-        setUserBookings(data || []);
-      } catch (err) {
-        console.error("Erro na busca de agendamentos:", err);
-      } finally {
-        setLoadingBookings(false);
-      }
-    };
-
-    searchUserBookings();
-  }, [contact]);
+      searchUserBookings();
+    } else {
+      setUserBookings([]);
+    }
+  }, [contact, senha]);
   async function handleCancel() {
     if (!selectedBooking) {
       toast.warning("Selecione o agendamento que deseja cancelar.");
@@ -90,7 +83,8 @@ export default function Cancel() {
           name: selectedBooking.NOME,
           contact: selectedBooking.CONTATO,
           date: selectedBooking.DATA,
-          time: selectedBooking.HORA
+          time: selectedBooking.HORA,
+          senha: senha
         }
       });
       if (error) {
@@ -157,12 +151,14 @@ export default function Cancel() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="uuid">Senha (4 dígitos)</Label>
+                  <Label htmlFor="senha">Senha (4 dígitos)</Label>
                   <Input 
-                    id="uuid" 
+                    id="senha" 
                     placeholder="Digite os 4 dígitos" 
                     className="border-destructive/40" 
                     maxLength={4}
+                    value={senha}
+                    onChange={(e) => setSenha(e.target.value)}
                     disabled={isLoading}
                   />
                 </div>
@@ -171,7 +167,7 @@ export default function Cancel() {
           </Card>
 
           {/* Agendamentos encontrados */}
-          {contact && (
+          {contact && senha.length === 4 && (
             <Card className="mb-6 bg-card/95 backdrop-blur-sm border-destructive/20">
               <CardHeader>
                 <CardTitle className="text-red-600">Seus Agendamentos</CardTitle>

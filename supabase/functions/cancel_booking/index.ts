@@ -22,16 +22,16 @@ serve(async (req) => {
 
   try {
     const body = await req.json();
-    const { name, contact, date, time } = body ?? {};
+    const { name, contact, date, time, senha } = body ?? {};
 
-    if (!name || !contact || !date || !time) {
-      return new Response(JSON.stringify({ error: "Campos obrigatórios: nome, contato, data e horário" }), {
+    if (!name || !contact || !date || !time || !senha) {
+      return new Response(JSON.stringify({ error: "Campos obrigatórios: nome, contato, data, horário e senha" }), {
         status: 400,
         headers: { "Content-Type": "application/json", ...corsHeaders },
       });
     }
 
-    console.log('Procurando agendamento para cancelar:', { name, contact, date, time });
+    console.log('Procurando agendamento para cancelar:', { name, contact, date, time, senha });
 
     // Buscar o agendamento existente
     const { data: existingBooking, error: findError } = await supabase
@@ -41,6 +41,7 @@ serve(async (req) => {
       .eq("CONTATO", contact)
       .eq("DATA", date)
       .eq("HORA", time)
+      .eq("senha", senha)
       .neq("STATUS", "CANCELADO")
       .maybeSingle();
 

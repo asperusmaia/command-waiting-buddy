@@ -22,16 +22,16 @@ serve(async (req) => {
 
   try {
     const body = await req.json();
-    const { oldName, oldContact, oldDate, oldTime, newDate, newTime, professional, service } = body ?? {};
+    const { oldName, oldContact, oldDate, oldTime, newDate, newTime, professional, service, senha } = body ?? {};
 
-    if (!oldName || !oldContact || !oldDate || !oldTime || !newDate || !newTime) {
-      return new Response(JSON.stringify({ error: "Campos obrigatórios: nome, contato, data antiga, horário antigo, nova data e novo horário" }), {
+    if (!oldName || !oldContact || !oldDate || !oldTime || !newDate || !newTime || !senha) {
+      return new Response(JSON.stringify({ error: "Campos obrigatórios: nome, contato, data antiga, horário antigo, nova data, novo horário e senha" }), {
         status: 400,
         headers: { "Content-Type": "application/json", ...corsHeaders },
       });
     }
 
-    console.log('Procurando agendamento:', { oldName, oldContact, oldDate, oldTime });
+    console.log('Procurando agendamento:', { oldName, oldContact, oldDate, oldTime, senha });
 
     // Buscar o agendamento existente
     const { data: existingBooking, error: findError } = await supabase
@@ -41,6 +41,7 @@ serve(async (req) => {
       .eq("CONTATO", oldContact)
       .eq("DATA", oldDate)
       .eq("HORA", oldTime)
+      .eq("senha", senha)
       .neq("STATUS", "CANCELADO")
       .maybeSingle();
 
