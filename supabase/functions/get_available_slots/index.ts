@@ -103,28 +103,40 @@ serve(async (req) => {
     }
 
     // Agendamentos existentes (ignorar cancelados) - FILTRAR APENAS DA DATA SOLICITADA
-    let baseQuery = supabase
+    const { data: ags, error: agsErr } = await supabase
       .from("agendamentos_robustos")
       .select("HORA, PROFISSIONAL, STATUS")
       .eq("DATA", date)
       .in("STATUS", ["AGENDADO", "REAGENDADO"]); // Apenas status ativos
 
-    if (professional) {
-      baseQuery = baseQuery.eq("PROFISSIONAL", professional);
-    }
-
-    // Buscar agendamentos existentes
-    const { data: ags, error: agsErr } = await baseQuery;
     if (agsErr) throw agsErr;
 
-    const bookedTimes = new Set((ags ?? []).map((a: any) => {
+    const bookedTimes = new Set();
+    
+    console.log('Agendamentos encontrados para', date, ':', ags);
+    console.log('Profissional filtro:', professional);
+    
+    (ags ?? []).forEach((a: any) => {
       const hora = typeof a.HORA === "string" ? a.HORA : String(a.HORA);
-      // Garantir que sempre comparamos no formato HH:MM (remover segundos se existirem)
-      return hora.slice(0, 5);
-    }));
+      const horaFormatada = hora.slice(0, 5); // Garantir formato HH:MM
+      
+      if (professional) {
+        // Se profissional foi especificado, bloquear apenas se o MESMO profissional tem agendamento
+        if (a.PROFISSIONAL === professional) {
+          console.log(`Bloqueando horário ${horaFormatada} para profissional ${professional}`);
+          bookedTimes.add(horaFormatada);
+        } else {
+          console.log(`Não bloqueando ${horaFormatada} - agendamento é para ${a.PROFISSIONAL}, buscando para ${professional}`);
+        }
+      } else {
+        // Se nenhum profissional especificado, bloquear o horário para QUALQUER profissional
+        console.log(`Bloqueando horário ${horaFormatada} (sem filtro de profissional)`);
+        bookedTimes.add(horaFormatada);
+      }
+    });
+    
+    console.log('Horários bloqueados:', Array.from(bookedTimes));
 
-    // Se profissional informado: bloqueia horário se o mesmo pro já tem agendamento.
-    // Caso contrário (sem profissional): considera bloqueado se qualquer agendamento existe nesse horário
     let available = slots.filter((s) => !bookedTimes.has(s));
 
     // Para a data de hoje, filtrar apenas horários futuros (timezone Brasil)
