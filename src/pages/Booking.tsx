@@ -264,8 +264,20 @@ export default function Booking() {
       });
     } catch (e: any) {
       console.error('Erro completo ao agendar:', e);
-      const msg = e?.message || "Erro ao confirmar agendamento.";
-      toast.error(msg.includes("duplicate") ? "Horário indisponível." : msg);
+      
+      // Verificar se a resposta contém informação sobre horário já agendado
+      if (e?.message?.includes("O horário selecionado já possui agendamento")) {
+        toast.error("O horário selecionado já possui agendamento. Por favor, atualize a página e escolha outro horário disponível.", {
+          duration: 6000
+        });
+        // Recarregar slots automaticamente após alguns segundos
+        setTimeout(() => {
+          fetchAllSlots();
+        }, 2000);
+      } else {
+        const msg = e?.message || "Erro ao confirmar agendamento.";
+        toast.error(msg.includes("duplicate") ? "Horário indisponível." : msg);
+      }
     }
   }
 

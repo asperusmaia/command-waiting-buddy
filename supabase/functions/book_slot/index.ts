@@ -58,7 +58,10 @@ serve(async (req) => {
     if (conflictError) throw conflictError;
 
     if (conflicts && conflicts.length > 0) {
-      return new Response(JSON.stringify({ error: "Horário não disponível" }), {
+      return new Response(JSON.stringify({ 
+        error: "O horário selecionado já possui agendamento. Por favor, atualize a página e escolha outro horário disponível.",
+        conflictType: "OUTDATED_SCHEDULE"
+      }), {
         status: 409,
         headers: { "Content-Type": "application/json", ...corsHeaders },
       });
@@ -110,7 +113,7 @@ serve(async (req) => {
     });
   } catch (e) {
     console.error("book_slot error", e);
-    return new Response(JSON.stringify({ error: String(e?.message ?? e) }), {
+    return new Response(JSON.stringify({ error: String((e as Error)?.message ?? e) }), {
       status: 500,
       headers: { "Content-Type": "application/json", ...corsHeaders },
     });
