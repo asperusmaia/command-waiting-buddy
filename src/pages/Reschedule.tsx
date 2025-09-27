@@ -162,6 +162,9 @@ export default function Reschedule() {
         arr.push(`${y}-${m}-${d}`);
       }
       i++;
+      
+      // Evitar loop infinito - máximo 30 dias de busca
+      if (i > 30) break;
     }
     
     console.log('Data Brasil hoje (Reschedule):', brazilTime);
@@ -358,19 +361,19 @@ export default function Reschedule() {
                       )}
                        onClick={() => setSelectedBooking(booking)}
                      >
-                       {/* Círculo indicador de seleção */}
-                       {selectedBooking?.id === booking.id && (
-                         <div className="absolute left-2 top-1/2 transform -translate-y-1/2 w-3 h-3 bg-warning rounded-full"></div>
-                       )}
-                       <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm ml-6">
-                        <div>
-                          <span className="font-medium text-warning">Nome:</span>
-                          <p>{booking.NOME}</p>
-                        </div>
-                        <div>
-                          <span className="font-medium text-warning">Data:</span>
-                          <p>{format(new Date(booking.DATA), "dd/MM/yyyy", { locale: ptBR })}</p>
-                        </div>
+                        {/* Círculo indicador de seleção - posicionado na curvatura da borda */}
+                        {selectedBooking?.id === booking.id && (
+                          <div className="absolute left-2 top-2 w-3 h-3 bg-warning rounded-full"></div>
+                        )}
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm ml-6">
+                         <div>
+                           <span className="font-medium text-warning">Nome:</span>
+                           <p>{booking.NOME}</p>
+                         </div>
+                         <div>
+                           <span className="font-medium text-warning">Data:</span>
+                           <p>{format(new Date(booking.DATA + 'T00:00:00'), "dd/MM/yyyy", { locale: ptBR })}</p>
+                         </div>
                         <div>
                           <span className="font-medium text-warning">Horário:</span>
                           <p>{booking.HORA}</p>
